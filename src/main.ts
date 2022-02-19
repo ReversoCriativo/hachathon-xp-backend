@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { author, name, version, description } from '../package.json';
+import { HttpExceptionFilter } from 'exceptions/exception-filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,6 +22,8 @@ async function bootstrap() {
       forbidUnknownValues: true,
     }),
   );
+
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle(`[${author}]-${name}`.toUpperCase())

@@ -1,13 +1,24 @@
-import { Controller, Post } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { UserDto } from './../../users/dto/user.dto';
+import { Body, Controller, Post } from '@nestjs/common';
+import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { IAuthProvider } from '../contracts/auth-provider';
+import { HandleLoginDto } from '../dto/handle-login.dto';
 
 @Controller({
   path: 'v1/auth',
 })
 @ApiTags('Auth')
 export class AuthController {
-  @Post()
-  async login() {
-    return [];
+  constructor(protected readonly provider: IAuthProvider) {}
+
+  @Post('login')
+  @ApiBody({
+    type: HandleLoginDto,
+  })
+  @ApiResponse({
+    type: UserDto,
+  })
+  async login(@Body() { user }: HandleLoginDto) {
+    return this.provider.authenticate(user);
   }
 }
