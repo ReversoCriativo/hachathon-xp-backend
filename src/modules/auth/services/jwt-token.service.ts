@@ -46,9 +46,6 @@ export class JwtTokenService implements ITokenManager {
 
   protected async sign(data: any, exp?: number) {
     if (exp) data.exp = Math.floor(Date.now() / 1000) + exp * 60;
-    return jwt.sign(
-      data,
-      this.configService.get(Env.TOKEN_EXPIRATION) as string,
-    );
+    return jwt.sign(data, this.configService.get(Env.TOKEN_SECRET) as string);
   }
 }

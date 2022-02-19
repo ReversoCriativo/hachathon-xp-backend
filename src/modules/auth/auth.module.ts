@@ -7,6 +7,7 @@ import { OpenBankingAuthService } from './services/openbanking-auth.service';
 import { AuthController } from './controllers/auth.controller';
 import { ITokenManager } from './contracts/token-manager';
 import { ConfigModule } from '@nestjs/config';
+import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
   imports: [UsersModule, ConfigModule],
@@ -21,6 +22,7 @@ import { ConfigModule } from '@nestjs/config';
       useClass: JwtTokenService,
     },
     CurrentUserFactory,
+    JwtStrategy,
   ],
 })
 export class AuthModule {}
