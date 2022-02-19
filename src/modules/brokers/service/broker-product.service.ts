@@ -5,15 +5,19 @@ import { BrokerIntegrationMediator } from '../mediators/broker-integration.media
 @Injectable()
 export class BrokerProductService {
   constructor(protected readonly brokerMediator: BrokerIntegrationMediator) {}
-  public async getAllProducts(): Promise<BrokerProductAggregatorDto[]> {
+  public async getAllProducts(filters?: {
+    broker: string;
+  }): Promise<BrokerProductAggregatorDto[]> {
     try {
+      const providers = Array.from(
+        this.brokerMediator.getProviders().entries(),
+      ).filter(([name]) => (filters?.broker ? filters.broker === name : true));
+
       const brokersResult = await Promise.all(
-        Array.from(this.brokerMediator.getProviders().entries()).map(
-          async ([name, provider]) => ({
-            broker: name,
-            products: await provider.getProducts(),
-          }),
-        ),
+        providers.map(async ([name, provider]) => ({
+          broker: name,
+          products: await provider.getProducts(),
+        })),
       );
 
       return brokersResult;
