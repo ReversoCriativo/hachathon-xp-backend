@@ -21,8 +21,10 @@ export class OpenBankingAuthService implements IAuthProvider {
 
     const currentUser = this.currentUserFactory.create(user);
 
+    const accessToken = await this.tokenService.create(currentUser);
+
     return {
-      accessToken: user as unknown as string,
+      accessToken,
     };
   }
 }
