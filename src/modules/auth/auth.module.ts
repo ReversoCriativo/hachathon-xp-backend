@@ -1,13 +1,8 @@
-import { HttpModule } from '@nestjs/axios';
+import { UsersModule } from './../users/users.module';
 import { Module } from '@nestjs/common';
 
 @Module({
-  imports: [
-    HttpModule.registerAsync({
-      useFactory: () => ({}),
-      inject: [],
-    }),
-  ],
+  imports: [UsersModule],
   controllers: [],
   providers: [],
 })
