@@ -25,4 +25,8 @@ export class BrokerProductService {
       console.error(e);
     }
   }
+
+  public async providerList() {
+    return Array.from(this.brokerMediator.getProviders().keys());
+  }
 }

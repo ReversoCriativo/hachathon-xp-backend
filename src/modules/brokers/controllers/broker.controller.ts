@@ -17,4 +17,10 @@ export class BrokerController {
   public async findAll(@Query() params?: GetProductsFilterDto) {
     return this.brokerService.getAllProducts(params);
   }
+
+  @Get('all')
+  @HttpCode(HttpStatus.OK)
+  public async getAllProviders() {
+    return this.brokerService.providerList();
+  }
 }
