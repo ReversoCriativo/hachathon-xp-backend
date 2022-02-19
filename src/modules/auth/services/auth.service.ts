@@ -1,21 +1,18 @@
-import { HttpService } from '@nestjs/axios';
-import { InternalServerErrorException } from '@nestjs/common';
-import { lastValueFrom } from 'rxjs';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { IAuthProvider } from '../contracts/auth';
+import { IAuthIntegration } from '../contracts/auth-integration';
 
+@Injectable()
 export class AuthService implements IAuthProvider {
-  constructor(protected readonly httpService: HttpService) {}
+  constructor(protected readonly authIntegration: IAuthIntegration) {}
   public async getGrantToken(
     clientId: string,
     secret: string,
   ): Promise<string> {
     try {
-      // const { data } = await lastValueFrom(
-      // 	await this.httpService.
-      // );
-      return '';
+      return await this.authIntegration.getAccessToken(clientId, secret);
     } catch (e) {
-      throw new InternalServerErrorException();
+      throw new BadRequestException('failed-to-call-open-banking');
     }
   }
 }
