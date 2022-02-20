@@ -1,13 +1,17 @@
+import { IUser } from './../../users/contracts/user';
 import { Env } from './../../../constants/env.enum';
 import { Injectable } from '@nestjs/common';
 import { IBrokerProduct } from '../contracts/broker-product';
 import {
   IBrokerFilters,
   IBrokerIntegration,
+  IProductResponsePayload,
 } from '../contracts/broker-integration';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
+import { thru, filter } from 'lodash';
+import { getInvestorProfile } from '../utils/get-investor-profile';
 
 @Injectable()
 export class XpProductIntegration implements IBrokerIntegration {
@@ -32,44 +36,83 @@ export class XpProductIntegration implements IBrokerIntegration {
     return data;
   }
 
-  async getProducts(
-    filters?: Partial<IBrokerFilters>,
-  ): Promise<IBrokerProduct[]> {
-    try {
-      const response = await this.findAllProducts();
+  private async getInvestorProfile(userName: string) {
+    const { data } = await lastValueFrom(
+      this.httpService.get(
+        `${this.configService.get(
+          Env.BASE_URL,
+        )}/broker/users/${userName}/suitability`,
+        {
+          headers: {
+            'user-agent': 'x-reverso-backend',
+            Authorization: `Bearer ${this.configService.get(Env.AUTH_TOKEN)}`,
+          },
+        },
+      ),
+    );
 
-      const products = [];
+    return data;
+  }
 
-      for (const key of Object.keys(response)) {
-        const wantedProducts = response[key];
-        if (!Array.isArray(wantedProducts)) {
-          continue;
-        }
-
-        /** @todo: verficar regra de renda variável */
-        products.push(
-          ...wantedProducts.map((product) => ({
-            productType: key,
-            ...product,
-          })),
-        );
+  private hydrateResponse(response: any): IBrokerProduct[] {
+    const products = [];
+    for (const key of Object.keys(response)) {
+      const wantedProducts = response[key];
+      if (!Array.isArray(wantedProducts)) {
+        continue;
       }
 
-      return products.filter((product) => {
-        if (filters?.risk) {
-          return product.risk < filters.risk;
-        }
+      products.push(
+        ...wantedProducts.map((product) => ({
+          productType: key,
+          ...product,
+        })),
+      );
+    }
 
-        if (filters?.value) {
-          return product.value <= filters.value;
-        }
+    return products;
+  }
 
-        return true;
-      });
+  private applyFilters(
+    filters: Partial<IBrokerFilters>,
+    investorProfileScale: number,
+    products: IBrokerProduct[],
+  ) {
+    return filter(products, ({ risk, value }) => {
+      const hasSecurityRisk = risk <= investorProfileScale;
+
+      if (filters?.value) {
+        return hasSecurityRisk && value <= filters.value;
+      }
+
+      return hasSecurityRisk;
+    });
+  }
+
+  public async getProducts(
+    user: Partial<IUser>,
+    filters?: Partial<IBrokerFilters>,
+  ): Promise<IProductResponsePayload> {
+    try {
+      const investorProfileScale = await this.getInvestorProfile(user.name);
+
+      const products = this.applyFilters(
+        filters,
+        investorProfileScale,
+        thru(await this.findAllProducts(), this.hydrateResponse),
+      );
+
+      return {
+        investorProfile: getInvestorProfile(investorProfileScale),
+        products,
+      };
     } catch (e) {
       console.error(e);
 
-      return [];
+      return {
+        investorProfile: undefined,
+        products: [],
+      };
     }
   }
 }

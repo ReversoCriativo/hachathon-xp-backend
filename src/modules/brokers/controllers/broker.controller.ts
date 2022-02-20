@@ -1,3 +1,5 @@
+import { ICurrentUser } from 'modules/auth/contracts/current-user';
+import { CurrentUser } from './../../auth/decorators/current-user.decorator';
 import { Protected } from 'modules/auth/decorators/protected.decorator';
 import { ApiTags } from '@nestjs/swagger';
 import { Controller, Get, HttpCode, HttpStatus, Query } from '@nestjs/common';
@@ -14,8 +16,11 @@ export class BrokerController {
   @Get()
   @Protected()
   @HttpCode(HttpStatus.OK)
-  public async findAll(@Query() params?: GetProductsFilterDto) {
-    return this.brokerService.getAllProducts(params);
+  public async findAll(
+    @CurrentUser() user: ICurrentUser,
+    @Query() params?: GetProductsFilterDto,
+  ) {
+    return this.brokerService.getAllProducts(user, params);
   }
 
   @Get('all')

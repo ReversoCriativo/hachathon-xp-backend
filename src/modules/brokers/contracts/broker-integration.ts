@@ -1,10 +1,18 @@
+import { IUser } from './../../users/contracts/user';
 import { IBrokerProduct } from './broker-product';
 
 export interface IBrokerFilters {
-  risk: number;
   value: number;
 }
 
+export interface IProductResponsePayload {
+  investorProfile: string;
+  products: IBrokerProduct[];
+}
+
 export interface IBrokerIntegration {
-  getProducts(filters?: Partial<IBrokerFilters>): Promise<IBrokerProduct[]>;
+  getProducts(
+    forUser: Partial<IUser>,
+    filters?: Partial<IBrokerFilters>,
+  ): Promise<IProductResponsePayload>;
 }
